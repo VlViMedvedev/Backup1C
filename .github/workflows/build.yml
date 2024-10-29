@@ -6,7 +6,7 @@ permissions:
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'  # Запуск при пуше нового тега (например, v1.0.0)
 
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
@@ -23,11 +23,14 @@ jobs:
         run: |
           msbuild.exe Backup1C.sln /p:Configuration=Release /p:Platform="Any CPU"
 
+      - name: List files
+        run: Get-ChildItem -Recurse D:\a\Backup1C\Backup1C
+
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: Build-Artifacts
-          path: '**/bin/Release/*.exe'  # Используем подстановку для поиска .exe файла
+          path: 'D:\a\Backup1C\Backup1C\Backup1C\bin\Release\*.exe'  # Абсолютный путь к .exe файлу
 
   release:
     needs: build
@@ -35,12 +38,16 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: Build-Artifacts
+          path: 'D:\a\Backup1C\'  # Извлечение артефактов в указанную директорию
+
+      - name: List directories and files
+        run: Get-ChildItem -Recurse -Force D:\a\Backup1C\
 
       - name: Create Release
         id: create_release
@@ -59,6 +66,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: '**/bin/Release/*.exe'  # Используем подстановку для загрузки .exe файла
+          asset_path: 'D:\a\Backup1C\Backup1C\Backup1C\bin\Release\Backup1C.exe'  # Абсолютный путь к .exe файлу
           asset_name: Backup1C.exe
           asset_content_type: application/octet-stream
